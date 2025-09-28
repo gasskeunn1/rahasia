@@ -2,11 +2,11 @@ name: Update Hypera Playlist with Logo
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # setiap 5 menit
+    - cron: "*/5 * * * *"   # setiap 5 menit
   workflow_dispatch:
 
 jobs:
-  build:
+  update-playlist:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,17 +26,17 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      # Run update script
+      # Jalankan script update.py
       - name: Run update script
         run: python update.py
 
-      # Commit & push changes menggunakan GITHUB_TOKEN
+      # Commit & push dengan GITHUB_TOKEN
       - name: Commit & push changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tipikroya.m3u errors.log || true
-          git commit -m "Auto-update tipikroya.m3u with refreshed token [skip ci]" || echo "No changes"
+          git add tipikroya.m3u errors.log last_response.html || true
+          git commit -m "Auto-update tipikroya.m3u with refreshed token [skip ci]" || echo "No changes to commit"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git gh-pages
