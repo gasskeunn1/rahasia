@@ -1,39 +1,39 @@
 import requests
-import os
+import time
 
-# URL API Hypera
-API_URL = "https://hypera.live/api/stats"
+url = "https://hypera.live/api/stats"
 
-# File M3U output
-OUTPUT_FILE = "tipikroya.m3u"
+for i in range(3):  # coba 3 kali
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        try:
+            data = resp.json()
+            break
+        except Exception as e:
+            print("JSON decode error, retrying...", e)
+    else:
+        print(f"HTTP error {resp.status_code}, retrying...")
+    time.sleep(2)
+else:
+    print("Gagal ambil data JSON, hentikan script.")
+    exit(1)
 
-def fetch_channels():
-    resp = requests.get(API_URL)
-    resp.raise_for_status()
-    data = resp.json()
-    return data.get("channels", [])
+# lanjut buat M3U
+lines = ["#EXTM3U"]
 
-def generate_m3u(channels):
-    lines = ["#EXTM3U\n"]
-    for ch in channels:
-        name = ch.get("name", ch.get("id", "Unknown"))
-        logo = ch.get("poster", "")  # poster URL
-        m3u8_url = ch.get("url", "")
-        if not m3u8_url:
-            continue
-        lines.append(f'#EXTINF:-1 tvg-logo="{logo}" group-title="Korea", {name}')
-        lines.append(m3u8_url)
-    return "\n".join(lines)
+for ch in data.get("channels", []):
+    name = ch.get("name", "Unknown")
+    poster = ch.get("poster", "")
+    m3u8 = ch.get("stream", {}).get("url", "")
+    if m3u8:
+        lines.append(f'#EXTINF:-1 tvg-logo="{poster}",{name}')
+        lines.append(m3u8)
 
-def main():
-    try:
-        channels = fetch_channels()
-        m3u_content = generate_m3u(channels)
-        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-            f.write(m3u_content)
-        print(f"🎉 Playlist berhasil diperbarui: {OUTPUT_FILE} ({len(channels)} channel)")
-    except Exception as e:
-        print("❌ Gagal memperbarui playlist:", e)
+with open("tipikroya.m3u", "w", encoding="utf-8") as f:
+    f.write("\n".join(lines))
+
+print("Playlist berhasil diperbarui: tipikroya.m3u")
+
 
 if __name__ == "__main__":
     main()
