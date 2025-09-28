@@ -2,38 +2,34 @@ name: Update Playlist
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # tiap menit
-  workflow_dispatch:        # bisa juga manual run dari Actions tab
+    - cron: "*/1 * * * *"   
+  workflow_dispatch:        
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.x"
+          python-version: '3.x'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip requests
+          python -m pip install --upgrade pip
+          pip install requests
 
-      - name: Run update script
-        run: |
-          python update.py
+      - name: Run update.py
+        run: python update.py
 
-      - name: Commit & Push if changed
+      - name: Commit and push changes
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add playlist.m3u errors.log || true
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update playlist & errors [skip ci]"
-            git push
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add playlist.m3u playlist_*.m3u index.html
+          git commit -m "Auto update playlist [skip ci]" || echo "No changes to commit"
+          git push origin gh-pages
