@@ -1,19 +1,19 @@
-name: Update Tipikroya Playlist
+name: Auto Update Tipikroya Playlist
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # jalan tiap 1 menit
+    - cron: "*/1 * * * *"   # jalankan tiap 1 menit
   workflow_dispatch:        # bisa dijalankan manual
 
 jobs:
-  build:
+  auto-update:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout gh-pages branch
         uses: actions/checkout@v4
         with:
-          ref: gh-pages   # langsung kerja di branch gh-pages
+          ref: gh-pages
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -24,13 +24,14 @@ jobs:
         run: |
           pip install requests
 
-      - name: Run update script
+      - name: Generate tipikroya.m3u
         run: |
-          python update.py || true   # kalau error, tetap lanjut
+          # Contoh: download dari URL atau jalankan script update.py
+          python update.py || echo "update.py gagal, lanjutkan"
 
-      - name: Commit and push if changes
+      - name: Commit & push changes
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}  # PAT untuk private repo
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -41,10 +42,9 @@ jobs:
             if git diff --cached --quiet; then
               echo "Tidak ada perubahan, commit dilewati."
             else
-              git commit -m "Update tipikroya.m3u [skip ci]"
+              git commit -m "Auto-update tipikroya.m3u [skip ci]"
               git remote set-url origin https://x-access-token:${GH_PAT}@github.com/gasskeunn1/rahasia.git
               git push origin gh-pages
             fi
           else
             echo "File tipikroya.m3u tidak ditemukan, skip commit."
-          fi
