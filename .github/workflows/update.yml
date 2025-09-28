@@ -10,22 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout branch gh-pages
       - name: Checkout gh-pages branch
         uses: actions/checkout@v4
         with:
           ref: gh-pages
 
+      # Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
+      # Install dependencies
       - name: Install dependencies
         run: pip install requests
 
+      # Run update script
       - name: Run update script
         run: python update.py
 
+      # Commit & push changes menggunakan GITHUB_TOKEN
       - name: Commit & push changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -33,5 +38,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add tipikroya.m3u errors.log || true
-          git commit -m "Auto-update tipikroya.m3u with logo [skip ci]" || echo "No changes"
-          git push origin gh-pages
+          git commit -m "Auto-update tipikroya.m3u with refreshed token [skip ci]" || echo "No changes"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git gh-pages
