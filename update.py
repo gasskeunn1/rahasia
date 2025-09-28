@@ -1,49 +1,52 @@
 import requests
-import datetime
+import json
+from datetime import datetime
 
+# Contoh endpoint (harus disesuaikan dengan yang bisa diakses)
 API_URL = "https://hypera.live/api/stats"
-OUTPUT_FILE = "tipikroya.m3u"
-
-# Optional: bisa tambahkan User-Agent supaya tidak ditolak
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    "User-Agent": "Mozilla/5.0",
+    "Authorization": "Bearer <TOKEN_ANDA>",  # jika perlu token
 }
+
+M3U_FILE = "tipikroya.m3u"
 
 def fetch_channels():
     resp = requests.get(API_URL, headers=HEADERS)
-    if not resp.text.strip():
-        raise RuntimeError("Response kosong, gagal ambil JSON")
+    resp.raise_for_status()
+
+    # Cek apakah JSON valid
     try:
         data = resp.json()
-    except ValueError:
-        print("Isi response (untuk debug):", resp.text[:500])
-        raise
-    return data.get("channels", [])
+    except json.JSONDecodeError:
+        print("Gagal decode JSON, response:", resp.text[:200])
+        return []
+
+    channels = []
+    for ch in data.get("channels", []):
+        if "m3u8_url" in ch:  # ganti sesuai key yang benar
+            channels.append({
+                "name": ch.get("name") or ch.get("id"),
+                "poster": ch.get("poster") or "",
+                "url": ch.get("m3u8_url")
+            })
+    return channels
 
 def generate_m3u(channels):
     lines = ["#EXTM3U"]
     for ch in channels:
-        name = ch.get("schedule_en") or ch.get("schedule")
-        logo = ch.get("poster", "")  # Hypera API kadang ada poster field
-        url = ch.get("stream_url")   # Pastikan API mengembalikan link m3u8
-        if not url:
-            continue
-        extinf = f'#EXTINF:-1 tvg-logo="{logo}" tvg-name="{name}",{name}'
-        lines.append(extinf)
-        lines.append(url)
-    return "\n".join(lines)
+        lines.append(f'#EXTINF:-1 tvg-logo="{ch["poster"]}",{ch["name"]}')
+        lines.append(ch["url"])
+    with open(M3U_FILE, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+    print(f"Playlist berhasil diperbarui: {M3U_FILE} ({len(channels)} channel)")
 
 def main():
     channels = fetch_channels()
-    if not channels:
-        print("Tidak ada channel, playlist tidak diperbarui.")
-        return
-
-    m3u_content = generate_m3u(channels)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(m3u_content)
-
-    print(f"🎉 Playlist berhasil diperbarui: {OUTPUT_FILE} ({len(channels)} channel)")
+    if channels:
+        generate_m3u(channels)
+    else:
+        print("Tidak ada channel yang diambil.")
 
 if __name__ == "__main__":
     main()
