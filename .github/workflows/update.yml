@@ -1,42 +1,53 @@
-name: Update Hypera Playlist with Logo
+name: Auto-update tipikroya.m3u
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # setiap 5 menit
+    - cron: '*/10 * * * *' # update tiap 10 menit
   workflow_dispatch:
 
 jobs:
-  update-playlist:
+  update-m3u:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout branch gh-pages
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      # Setup Python
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
-      # Install dependencies
       - name: Install dependencies
         run: pip install requests
 
-      # Jalankan script update.py
-      - name: Run update script
-        run: python update.py
+      - name: Generate tipikroya.m3u
+        run: |
+          python <<'EOF'
+          import requests
+          import json
 
-      # Commit & push dengan GITHUB_TOKEN
-      - name: Commit & push changes
+          url = "https://hypera.live/api/stats"
+          resp = requests.get(url)
+          data = resp.json()
+
+          with open("tipikroya.m3u", "w", encoding="utf-8") as f:
+              f.write("#EXTM3U\n")
+              for ch in data.get("channels", []):
+                  name = ch.get("name", ch.get("id", "unknown"))
+                  poster = ch.get("poster", "")
+                  stream = ch.get("url", "")
+                  if stream.endswith(".m3u8"):
+                      f.write(f'#EXTINF:-1 tvg-logo="{poster}",{name}\n')
+                      f.write(f'{stream}\n')
+          EOF
+
+      - name: Commit & Push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tipikroya.m3u errors.log last_response.html || true
-          git commit -m "Auto-update tipikroya.m3u with refreshed token [skip ci]" || echo "No changes to commit"
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git gh-pages
+          git config user.email "actions@github.com"
+          git add tipikroya.m3u
+          git commit -m "Auto-update tipikroya.m3u" || echo "No changes to commit"
+          git push https://x-access-token:${PAT_TOKEN}@github.com/gasskeunn1/rahasia.git HEAD:main
