@@ -1,4 +1,4 @@
-name: Update Playlist
+name: Update Tipikroya Playlist
 
 on:
   schedule:
@@ -26,12 +26,25 @@ jobs:
 
       - name: Run update script
         run: |
-          python update.py || true   # kalau error, tetap lanjut commit
+          python update.py || true   # kalau error, tetap lanjut
 
       - name: Commit and push if changes
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}  # PAT untuk private repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add playlist.m3u errors.log last_response.html || true
-          git commit -m "Update playlist [skip ci]" || echo "No changes to commit"
-          git push origin gh-pages
+
+          if [ -f "tipikroya.m3u" ]; then
+            git add tipikroya.m3u errors.log last_response.html || true
+
+            if git diff --cached --quiet; then
+              echo "Tidak ada perubahan, commit dilewati."
+            else
+              git commit -m "Update tipikroya.m3u [skip ci]"
+              git remote set-url origin https://x-access-token:${GH_PAT}@github.com/gasskeunn1/rahasia.git
+              git push origin gh-pages
+            fi
+          else
+            echo "File tipikroya.m3u tidak ditemukan, skip commit."
+          fi
