@@ -18,45 +18,44 @@ def get_channels():
             f.write(f"[{datetime.now()}] ERROR get_channels: {e}\n")
         return []
 
-def fetch_m3u8(url):
-    """Ambil konten master .m3u8 tiap channel"""
-    try:
-        r = requests.get(url, timeout=15)
-        r.raise_for_status()
-        return r.text
-    except Exception as e:
-        with open(ERROR_LOG, "a", encoding="utf-8") as f:
-            f.write(f"[{datetime.now()}] ERROR fetch_m3u8: {e}\n")
-        return None
-
-def get_stream_url(channel_id):
-    """Cari URL master .m3u8 dari halaman channel"""
+def get_stream_and_logo(channel_id):
+    """Cari URL master .m3u8 dan poster/logo dari halaman channel"""
     try:
         r = requests.get(f"{BASE_URL}/{channel_id}", timeout=15)
         r.raise_for_status()
         html = r.text
-        match = re.search(r'(https://manifest\.media-delivery\.net/.*?\.m3u8\?token=[^"\s]+)', html)
-        return match.group(1) if match else None
+
+        # Ambil URL master .m3u8
+        m3u8_match = re.search(r'(https://manifest\.media-delivery\.net/.*?\.m3u8\?token=[^"\s]+)', html)
+        stream_url = m3u8_match.group(1) if m3u8_match else None
+
+        # Ambil poster/logo (jpg/png/webp)
+        logo_match = re.search(r'(https.*?\.(?:jpg|png|webp))', html)
+        logo_url = logo_match.group(1) if logo_match else None
+
+        return stream_url, logo_url
     except Exception as e:
         with open(ERROR_LOG, "a", encoding="utf-8") as f:
-            f.write(f"[{datetime.now()}] ERROR get_stream_url {channel_id}: {e}\n")
-        return None
+            f.write(f"[{datetime.now()}] ERROR get_stream_and_logo {channel_id}: {e}\n")
+        return None, None
 
 def save_playlist(channels):
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
         for ch in channels:
             name = ch.get("name", ch.get("id"))
+            schedule = ch.get("schedule", "")
             channel_id = ch.get("id")
-            url = get_stream_url(channel_id)
-            if url:
-                m3u8_content = fetch_m3u8(url)
-                if m3u8_content:
-                    f.write(f"#EXTINF:-1,{name}\n")
-                    f.write(m3u8_content + "\n")
-                    print(f"✅ {name} updated")
-                else:
-                    print(f"⚠️ {name} fetch failed")
+            stream_url, logo_url = get_stream_and_logo(channel_id)
+
+            if stream_url:
+                extinf_line = f"#EXTINF:-1"
+                if logo_url:
+                    extinf_line += f' tvg-logo="{logo_url}"'
+                extinf_line += f',{name} – {schedule}\n'
+                f.write(extinf_line)
+                f.write(stream_url + "\n")
+                print(f"✅ {name} updated")
             else:
                 print(f"⚠️ {name} no stream URL")
 
