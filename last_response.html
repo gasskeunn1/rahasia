@@ -1,0 +1,106 @@
+
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <title>Unauthorized Access | hypera.live</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="/images/favicon.ico">
+
+        <!-- Bootstrap Css -->
+        <link href="/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
+        <!-- Icons Css -->
+        <link href="/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <!-- App Css-->
+        <link href="/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
+
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-XC3J1X1K5E"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+          
+            gtag('config', 'G-XC3J1X1K5E');
+            gtag('set', 'allow_google_signals', true);
+            gtag('set', 'allow_ad_personalization_signals', true);
+        </script>
+        
+        <script>
+            var language = navigator.language.toLowerCase() || "en-US,en;q=0.9;default";
+            var languages = navigator.languages || "no language list";
+            var referrer = window.document.referrer || 'no referrer';
+            var ads_jwt = "";
+            var platform_language = "en";
+            var request_id = "cd6f8610-813f-4769-9f99-9e75f798cbb8";
+            var channel_id = "home";
+            var page_desc = `home page\nfeature flags: ${JSON.stringify(featureFlags)}\nfeature flags conditions: ${JSON.stringify(feature_flags_conditions)}`
+            var user = null;
+            var backoff = 0;
+            var country = "US";
+
+            
+
+            function sendBeacon(data) {
+                var img = new Image();
+                img.onload = function() {
+                    //
+                }
+                img.onerror = function() {
+                    //
+                }
+                
+                var encode = new TextEncoder().encode(data);
+                var binString = String.fromCodePoint(...encode);
+                img.src = `https://hypera.live/beacon?d=${btoa(binString)}`;
+            }
+
+            sendBeacon(JSON.stringify({
+                type: 'page_load',
+                page: page_desc,
+                platform_language: platform_language,
+                language: language,
+                languages: languages,
+                referer: referrer,
+                is_ab_trigger_v2: false,
+                request_id: request_id
+            }));
+        </script>
+
+    </head>
+
+    <body>
+
+        <div class="account-pages my-5 pt-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="text-center mb-5">
+                            <h1 class="display-2 font-weight-medium">4<i class="bx bx-buoy bx-spin text-primary display-3"></i>3</h1>
+                            <h4 class="text-uppercase">You are not entitled to access this page.</h4>
+                            <h4 class="text-uppercase">현재 위치에서는 이 서비스를 이용할 수 없습니다. NO VPN, NO ROAMING!</h4><br><br>
+                            <p>문의메일: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="94fcf1f8f8fbd4fcede4f1e6f5baf8fde2f1">[email&#160;protected]</a> ~ US n/a  ~ cd6f8610-813f-4769-9f99-9e75f798cbb8</p>
+                            <p><a href="https://hypera.live">Click here</a> to go to home page.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-xl-6">
+                        <div>
+                            <img src="/images/error-img.png" alt="" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JAVASCRIPT -->
+        <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="/libs/jquery/jquery.min.js"></script>
+        <script src="/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="/libs/node-waves/waves.min.js"></script>
+
+        <script src="/js/app5.js"></script>
+    </body>
+</html>
