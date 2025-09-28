@@ -1,46 +1,49 @@
 import requests
-import time
+import datetime
 
-# URL API Hypera
 API_URL = "https://hypera.live/api/stats"
-M3U_FILE = "tipikroya.m3u"
+OUTPUT_FILE = "tipikroya.m3u"
 
-def fetch_data(retries=3, delay=2):
-    """Fetch JSON data from API with retries."""
-    headers = {"User-Agent": "Mozilla/5.0"}  # tambahkan header kalau perlu
-    for _ in range(retries):
-        try:
-            resp = requests.get(API_URL, headers=headers, timeout=10)
-            if resp.status_code != 200:
-                print(f"HTTP {resp.status_code}, retrying...")
-                time.sleep(delay)
-                continue
-            return resp.json()
-        except (requests.RequestException, ValueError) as e:
-            print(f"Error: {e}, retrying...")
-            time.sleep(delay)
-    raise RuntimeError("Gagal ambil data dari API.")
+# Optional: bisa tambahkan User-Agent supaya tidak ditolak
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+}
 
-def generate_m3u(data):
-    """Generate M3U playlist from API JSON."""
+def fetch_channels():
+    resp = requests.get(API_URL, headers=HEADERS)
+    if not resp.text.strip():
+        raise RuntimeError("Response kosong, gagal ambil JSON")
+    try:
+        data = resp.json()
+    except ValueError:
+        print("Isi response (untuk debug):", resp.text[:500])
+        raise
+    return data.get("channels", [])
+
+def generate_m3u(channels):
     lines = ["#EXTM3U"]
-    for ch in data.get("channels", []):
-        name = ch.get("name") or ch.get("schedule") or "Unknown"
-        poster = ch.get("poster") or ""
-        url = ch.get("stream") or ch.get("m3u8") or ""
+    for ch in channels:
+        name = ch.get("schedule_en") or ch.get("schedule")
+        logo = ch.get("poster", "")  # Hypera API kadang ada poster field
+        url = ch.get("stream_url")   # Pastikan API mengembalikan link m3u8
         if not url:
-            continue  # skip channel tanpa link
-        extinf = f'#EXTINF:-1 tvg-logo="{poster}",{name}'
+            continue
+        extinf = f'#EXTINF:-1 tvg-logo="{logo}" tvg-name="{name}",{name}'
         lines.append(extinf)
         lines.append(url)
     return "\n".join(lines)
 
 def main():
-    data = fetch_data()
-    m3u_content = generate_m3u(data)
-    with open(M3U_FILE, "w", encoding="utf-8") as f:
+    channels = fetch_channels()
+    if not channels:
+        print("Tidak ada channel, playlist tidak diperbarui.")
+        return
+
+    m3u_content = generate_m3u(channels)
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(m3u_content)
-    print(f"Playlist berhasil diperbarui: {M3U_FILE}")
+
+    print(f"🎉 Playlist berhasil diperbarui: {OUTPUT_FILE} ({len(channels)} channel)")
 
 if __name__ == "__main__":
     main()
