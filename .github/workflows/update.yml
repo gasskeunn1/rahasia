@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: gh-pages
+          token: ${{ secrets.GH_PAT }}  # Gunakan PAT saat checkout
 
       # 2️⃣ Setup Python
       - name: Setup Python
@@ -32,10 +33,10 @@ jobs:
         run: |
           python update.py || echo "update.py gagal, lanjutkan"
 
-      # 5️⃣ Commit & push changes aman menggunakan PAT
+      # 5️⃣ Commit & push changes menggunakan PAT
       - name: Commit & push changes
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}   # token disimpan di Secrets
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -43,11 +44,12 @@ jobs:
           if [ -f "tipikroya.m3u" ]; then
             git add tipikroya.m3u errors.log last_response.html || true
 
-            # Commit hanya jika ada perubahan
             if git diff --cached --quiet; then
               echo "Tidak ada perubahan, commit dilewati."
             else
               git commit -m "Auto-update tipikroya.m3u [skip ci]"
+              
+              # Gunakan PAT untuk push, cocok untuk repo private atau branch protected
               git remote set-url origin https://x-access-token:${GH_PAT}@github.com/gasskeunn1/rahasia.git
               git push origin gh-pages
             fi
