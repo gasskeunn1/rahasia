@@ -6,34 +6,27 @@ on:
   workflow_dispatch:        # bisa dijalankan manual
 
 jobs:
-  auto-update:
+  update:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout gh-pages branch
-      - name: Checkout gh-pages branch
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           ref: gh-pages
-          token: ${{ secrets.GH_PAT }}  # gunakan PAT saat checkout
+          token: ${{ secrets.GH_PAT }}
 
-      # 2️⃣ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
-        run: |
-          pip install requests
+        run: pip install requests
 
-      # 4️⃣ Jalankan script update.py untuk generate tipikroya.m3u
       - name: Generate tipikroya.m3u
-        run: |
-          python update.py
+        run: python update.py
 
-      # 5️⃣ Commit & push changes menggunakan PAT
       - name: Commit & push changes
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
