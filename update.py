@@ -1,6 +1,5 @@
 import requests
 import re
-import json
 import os
 from datetime import datetime
 
@@ -30,7 +29,7 @@ def get_stream_url_and_logo(channel_id):
 
     return stream_url, poster_url
 
-def save_m3u(channels, filename="playlist.m3u"):
+def save_m3u(channels, filename):
     """Simpan daftar channel ke file M3U"""
     with open(filename, "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
@@ -43,6 +42,16 @@ def save_m3u(channels, filename="playlist.m3u"):
                     f.write(f'#EXTINF:-1 tvg-logo="{logo}",{name}\n{stream_url}\n')
                 else:
                     f.write(f'#EXTINF:-1,{name}\n{stream_url}\n')
+
+def save_index_html(channels, filename="index.html"):
+    """Simpan daftar channel ke HTML untuk dipreview"""
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Playlist</title></head><body>")
+        f.write("<h1>Daftar Channel</h1><ul>")
+        for ch in channels:
+            logo = f"<img src='{ch['logo']}' width='50'>" if ch.get("logo") else ""
+            f.write(f"<li>{logo} {ch['name']}</li>")
+        f.write("</ul></body></html>")
 
 def main():
     errors = []
@@ -67,8 +76,19 @@ def main():
             errors.append(f"{name} ({channel_id}) -> Error: {e}")
             print(f"❌ {name}: {e}")
 
-    # Simpan playlist
-    save_m3u(playlist)
+    if not playlist:
+        print("❌ Tidak ada channel valid, skip save.")
+        return
+
+    # Simpan playlist utama
+    save_m3u(playlist, "playlist.m3u")
+
+    # Simpan playlist versi random (timestamp)
+    ts_name = f"playlist_{int(datetime.now().timestamp())}.m3u"
+    save_m3u(playlist, ts_name)
+
+    # Simpan index.html
+    save_index_html(playlist)
 
     # Simpan error log
     if errors:
