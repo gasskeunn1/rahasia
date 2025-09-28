@@ -44,15 +44,13 @@ jobs:
           if [ -f "tipikroya.m3u" ]; then
             git add tipikroya.m3u errors.log || true
 
-            # Commit hanya jika ada perubahan
             if git diff --cached --quiet; then
               echo "Tidak ada perubahan, commit dilewati."
             else
               git commit -m "Auto-update tipikroya.m3u [skip ci]"
-              
-              # Push aman ke repo private atau branch protected
               git remote set-url origin https://x-access-token:${GH_PAT}@github.com/gasskeunn1/rahasia.git
               git push origin gh-pages
             fi
           else
             echo "File tipikroya.m3u tidak ditemukan, skip commit."
+          fi
