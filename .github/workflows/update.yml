@@ -26,7 +26,6 @@ jobs:
 
       - name: Generate tipikroya.m3u
         run: |
-          # Contoh: download dari URL atau jalankan script update.py
           python update.py || echo "update.py gagal, lanjutkan"
 
       - name: Commit & push changes
@@ -36,9 +35,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # Cek dulu apakah file tipikroya.m3u ada
           if [ -f "tipikroya.m3u" ]; then
             git add tipikroya.m3u errors.log last_response.html || true
 
+            # Commit hanya kalau ada perubahan
             if git diff --cached --quiet; then
               echo "Tidak ada perubahan, commit dilewati."
             else
@@ -48,3 +49,4 @@ jobs:
             fi
           else
             echo "File tipikroya.m3u tidak ditemukan, skip commit."
+          fi
