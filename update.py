@@ -5,21 +5,44 @@ from datetime import datetime
 
 BASE_URL = "https://hypera.live"
 
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "Referer": BASE_URL,
+}
+
+
 def get_channels():
     """Ambil daftar channel dari API stats"""
     url = f"{BASE_URL}/api/stats"
-    r = requests.get(url, timeout=15)
+    r = requests.get(url, headers=HEADERS, timeout=15)
     r.raise_for_status()
-    return r.json().get("channels", [])
+
+    try:
+        data = r.json()
+    except Exception:
+        with open("last_response.html", "w", encoding="utf-8") as f:
+            f.write(r.text)
+        raise RuntimeError(
+            f"API tidak mengembalikan JSON. Status: {r.status_code}, "
+            f"panjang response: {len(r.text)}"
+        )
+
+    return data.get("channels", [])
+
 
 def get_stream_url_and_logo(channel_id):
     """Cari link m3u8 + poster dari halaman channel"""
     url = f"{BASE_URL}/{channel_id}"
-    r = requests.get(url, timeout=15)
+    r = requests.get(url, headers=HEADERS, timeout=15)
     r.raise_for_status()
     html = r.text
 
-    # Cari m3u8 (tokenized)
+    # Cari m3u8
     m3u8_match = re.search(r'(https.*?\.m3u8[^"\'\s<]+)', html)
     stream_url = m3u8_match.group(1) if m3u8_match else None
 
@@ -29,7 +52,8 @@ def get_stream_url_and_logo(channel_id):
 
     return stream_url, poster_url
 
-def save_m3u(channels, filename):
+
+def save_m3u(channels, filename="playlist.m3u"):
     """Simpan daftar channel ke file M3U"""
     with open(filename, "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
@@ -43,15 +67,6 @@ def save_m3u(channels, filename):
                 else:
                     f.write(f'#EXTINF:-1,{name}\n{stream_url}\n')
 
-def save_index_html(channels, filename="index.html"):
-    """Simpan daftar channel ke HTML untuk dipreview"""
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Playlist</title></head><body>")
-        f.write("<h1>Daftar Channel</h1><ul>")
-        for ch in channels:
-            logo = f"<img src='{ch['logo']}' width='50'>" if ch.get("logo") else ""
-            f.write(f"<li>{logo} {ch['name']}</li>")
-        f.write("</ul></body></html>")
 
 def main():
     errors = []
@@ -76,19 +91,8 @@ def main():
             errors.append(f"{name} ({channel_id}) -> Error: {e}")
             print(f"❌ {name}: {e}")
 
-    if not playlist:
-        print("❌ Tidak ada channel valid, skip save.")
-        return
-
-    # Simpan playlist utama
-    save_m3u(playlist, "playlist.m3u")
-
-    # Simpan playlist versi random (timestamp)
-    ts_name = f"playlist_{int(datetime.now().timestamp())}.m3u"
-    save_m3u(playlist, ts_name)
-
-    # Simpan index.html
-    save_index_html(playlist)
+    # Simpan playlist
+    save_m3u(playlist)
 
     # Simpan error log
     if errors:
@@ -97,6 +101,7 @@ def main():
             f.write("\n".join(errors) + "\n")
 
     print("🎉 Playlist berhasil diupdate.")
+
 
 if __name__ == "__main__":
     main()
