@@ -39,7 +39,7 @@ def get_stream_url_and_logo(channel_id):
 
     return stream_url, poster_url
 
-def save_m3u(channels, filename="playlist.m3u"):
+def save_m3u(channels, filename="tipikroya.m3u"):
     """Simpan daftar channel ke file M3U"""
     with open(filename, "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
