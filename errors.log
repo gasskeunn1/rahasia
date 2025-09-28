@@ -2,3 +2,4 @@
 [2025-09-28 15:50:13.462350] ERROR ambil channels: API tidak mengembalikan JSON. Status: 200, panjang response: 4478
 [2025-09-28 15:55:47.532599] ERROR fetch_channels: Expecting value: line 2 column 1 (char 1)
 [2025-09-28 16:03:34.967154] ERROR fetch_channels: Expecting value: line 2 column 1 (char 1)
+[2025-09-28 16:12:13.679020] ERROR fetch_channels: Expecting value: line 2 column 1 (char 1)
