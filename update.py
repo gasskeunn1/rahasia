@@ -1,9 +1,12 @@
 import requests
 
-# URL API Hypera
+# File output M3U
+output_file = "tipikroya.m3u"
+
+# API Hypera
 url_api = "https://hypera.live/api/stats"
 
-# Cookies dari browser (harus update kalau expired)
+# Cookies yang valid (update kalau expired)
 cookies = {
     "_ga": "GA1.1.372946411.1759065554",
     "_ga_XC3J1X1K5E": "GS2.1.s1759080572$o4$g1$t1759081807$j59$l0$h0",
@@ -12,32 +15,37 @@ cookies = {
     "huid_jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodWlkIjoib2tyejFkNWI0dSIsImlzc3VlZF9hdCI6MTc1OTA2NTU1MzE5NiwiaWF0IjoxNzU5MDY1NTUzLCJleHAiOjE5MTY4NTM1NTN9.INijOj-ebg2a9cXlgXDhe5hclGeZqUWObU80EK8tooc"
 }
 
+# Headers browser untuk menghindari blokir
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+}
+
 def fetch_channels():
     try:
-        resp = requests.get(url_api, cookies=cookies, timeout=10)
+        resp = requests.get(url_api, cookies=cookies, headers=headers, timeout=10)
         data = resp.json()
-        return data.get("channels", [])
+        return data.get("channels", [])  # sesuaikan key jika beda
     except Exception as e:
         print("Gagal mengambil data:", e)
-        print("Isi response (untuk debug):", getattr(resp, "text", "")[:200])
+        print("Isi response (untuk debug):", resp.text[:500])
         return []
 
-def generate_m3u(channels):
-    with open("tipikroya.m3u", "w", encoding="utf-8") as f:
+def create_m3u(channels):
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
         for ch in channels:
-            name = ch.get("name") or ch.get("id")
-            poster = ch.get("poster") or ""
-            link = ch.get("m3u8_link")
+            name = ch.get("name", "Unknown")
+            poster = ch.get("poster", "")
+            link = ch.get("url", "")  # pastikan key m3u8 benar
             if link:
                 f.write(f'#EXTINF:-1 tvg-logo="{poster}",{name}\n')
                 f.write(f'{link}\n')
-    print(f"Playlist berhasil diperbarui: tipikroya.m3u ({len(channels)} channel)")
 
 def main():
     channels = fetch_channels()
     if channels:
-        generate_m3u(channels)
+        create_m3u(channels)
+        print(f"M3U berhasil dibuat: {output_file} ({len(channels)} channel)")
     else:
         print("Tidak ada channel yang diambil.")
 
