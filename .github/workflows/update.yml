@@ -10,36 +10,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout gh-pages branch
       - name: Checkout gh-pages branch
         uses: actions/checkout@v4
         with:
           ref: gh-pages
 
+      # 2️⃣ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           pip install requests
 
+      # 4️⃣ Generate/update tipikroya.m3u
       - name: Generate tipikroya.m3u
         run: |
           python update.py || echo "update.py gagal, lanjutkan"
 
+      # 5️⃣ Commit & push changes aman menggunakan PAT
       - name: Commit & push changes
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PAT: ${{ secrets.GH_PAT }}   # token disimpan di Secrets
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Cek dulu apakah file tipikroya.m3u ada
           if [ -f "tipikroya.m3u" ]; then
             git add tipikroya.m3u errors.log last_response.html || true
 
-            # Commit hanya kalau ada perubahan
+            # Commit hanya jika ada perubahan
             if git diff --cached --quiet; then
               echo "Tidak ada perubahan, commit dilewati."
             else
