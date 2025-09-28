@@ -1,20 +1,19 @@
-name: Auto Update Tipikroya Playlist
+name: Update Hypera Playlist
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # jalankan tiap 5 menit
-  workflow_dispatch:        # bisa dijalankan manual
+    - cron: "*/1 * * * *"   # jalan tiap 5 menit
+  workflow_dispatch:         # bisa dijalankan manual
 
 jobs:
-  update:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout gh-pages branch
         uses: actions/checkout@v4
         with:
           ref: gh-pages
-          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -24,26 +23,15 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Generate tipikroya.m3u
+      - name: Run update script
         run: python update.py
 
       - name: Commit & push changes
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          if [ -f "tipikroya.m3u" ]; then
-            git add tipikroya.m3u errors.log || true
-
-            if git diff --cached --quiet; then
-              echo "Tidak ada perubahan, commit dilewati."
-            else
-              git commit -m "Auto-update tipikroya.m3u [skip ci]"
-              git remote set-url origin https://x-access-token:${GH_PAT}@github.com/gasskeunn1/rahasia.git
-              git push origin gh-pages
-            fi
-          else
-            echo "File tipikroya.m3u tidak ditemukan, skip commit."
-          fi
+          git add tipikroya.m3u errors.log || true
+          git commit -m "Auto-update tipikroya.m3u [skip ci]" || echo "No changes"
+          git push origin gh-pages
