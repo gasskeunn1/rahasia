@@ -1,33 +1,36 @@
-name: Update M3U Playlist
+name: Update Playlist
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Update tiap 10 menit
-  workflow_dispatch:
+    - cron: '*/10 * * * *'  # setiap 10 menit
+  workflow_dispatch:       # bisa manual juga
 
 jobs:
-  update_playlist:
+  update:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
 
-    - name: Install dependencies
-      run: pip install requests
+      - name: Install dependencies
+        run: pip install requests
 
-    - name: Run update script
-      run: python update.py
+      - name: Run update.py
+        env:
+          HYPERA_COOKIE: ${{ secrets.HYPERA_COOKIE }}
+        run: python update.py
 
-    - name: Commit & push changes
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: Auto-update tipikroya.m3u
-        branch: main
-        file_pattern: tipikroya.m3u
-        author_name: github-actions
-        author_email: github-actions@users.noreply.github.com
+      - name: Commit & push playlist
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_user_name: github-actions
+          commit_user_email: github-actions@users.noreply.github.com
+          file_pattern: tipikroya.m3u
+          branch: main
+          commit_message: Auto-update playlist
