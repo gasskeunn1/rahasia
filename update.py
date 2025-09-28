@@ -5,44 +5,31 @@ from datetime import datetime
 
 BASE_URL = "https://hypera.live"
 
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "Referer": BASE_URL,
-}
-
-
 def get_channels():
     """Ambil daftar channel dari API stats"""
     url = f"{BASE_URL}/api/stats"
-    r = requests.get(url, headers=HEADERS, timeout=15)
-    r.raise_for_status()
+    r = requests.get(url, timeout=15)
+
+    # Simpan response mentah untuk debug
+    with open("last_response.html", "w", encoding="utf-8") as f:
+        f.write(r.text)
 
     try:
         data = r.json()
-    except Exception:
-        with open("last_response.html", "w", encoding="utf-8") as f:
-            f.write(r.text)
+        return data.get("channels", [])
+    except Exception as e:
         raise RuntimeError(
-            f"API tidak mengembalikan JSON. Status: {r.status_code}, "
-            f"panjang response: {len(r.text)}"
-        )
-
-    return data.get("channels", [])
-
+            f"API tidak mengembalikan JSON. Status: {r.status_code}, panjang response: {len(r.text)}"
+        ) from e
 
 def get_stream_url_and_logo(channel_id):
     """Cari link m3u8 + poster dari halaman channel"""
     url = f"{BASE_URL}/{channel_id}"
-    r = requests.get(url, headers=HEADERS, timeout=15)
+    r = requests.get(url, timeout=15)
     r.raise_for_status()
     html = r.text
 
-    # Cari m3u8
+    # Cari m3u8 (tokenized)
     m3u8_match = re.search(r'(https.*?\.m3u8[^"\'\s<]+)', html)
     stream_url = m3u8_match.group(1) if m3u8_match else None
 
@@ -51,7 +38,6 @@ def get_stream_url_and_logo(channel_id):
     poster_url = poster_match.group(1) if poster_match else None
 
     return stream_url, poster_url
-
 
 def save_m3u(channels, filename="playlist.m3u"):
     """Simpan daftar channel ke file M3U"""
@@ -67,11 +53,17 @@ def save_m3u(channels, filename="playlist.m3u"):
                 else:
                     f.write(f'#EXTINF:-1,{name}\n{stream_url}\n')
 
-
 def main():
     errors = []
-    channels_data = get_channels()
     playlist = []
+
+    try:
+        channels_data = get_channels()
+    except Exception as e:
+        with open("errors.log", "a", encoding="utf-8") as f:
+            f.write(f"\n[{datetime.now()}] ERROR ambil channels: {e}\n")
+        print(f"❌ Gagal ambil daftar channel: {e}")
+        return
 
     for ch in channels_data:
         channel_id = ch.get("id")
@@ -101,7 +93,6 @@ def main():
             f.write("\n".join(errors) + "\n")
 
     print("🎉 Playlist berhasil diupdate.")
-
 
 if __name__ == "__main__":
     main()
