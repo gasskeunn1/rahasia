@@ -1,9 +1,9 @@
-name: Update Hypera Playlist
+name: Update Hypera Playlist with Logo
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # jalan tiap 5 menit
-  workflow_dispatch:         # bisa dijalankan manual
+    - cron: "*/1 * * * *"   # setiap 5 menit
+  workflow_dispatch:
 
 jobs:
   build:
@@ -33,5 +33,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add tipikroya.m3u errors.log || true
-          git commit -m "Auto-update tipikroya.m3u [skip ci]" || echo "No changes"
+          git commit -m "Auto-update tipikroya.m3u with logo [skip ci]" || echo "No changes"
           git push origin gh-pages
