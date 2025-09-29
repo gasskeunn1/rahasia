@@ -1,38 +1,57 @@
 import asyncio
 from playwright.async_api import async_playwright
 import os
-import json
 
-API_URL = "https://hypera.live/api/stats"
+# URL langsung ke playlist M3U
+PLAYLIST_URL = "https://hypera.live/path/to/playlist.m3u"
 
-# Ambil cookies dari env variable agar aman di GitHub
 COOKIES_RAW = os.getenv("HYPERA_COOKIES", "")
 if not COOKIES_RAW:
     raise ValueError("ERROR: HYPERA_COOKIES environment variable not set or empty.")
 
-# Parsing cookies JSON dari env
-COOKIES = json.loads(COOKIES_RAW)
+def parse_cookies(raw):
+    cookies = []
+    for part in raw.split(";"):
+        if "=" not in part:
+            continue
+        name, value = part.strip().split("=", 1)
+        cookies.append({
+            "name": name,
+            "value": value,
+            "domain": "hypera.live",
+            "path": "/"
+        })
+    return cookies
 
-async def fetch_channels():
-    async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+COOKIES = parse_cookies(COOKIES_RAW)
+
+async def fetch_playlist():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
         context = await browser.new_context()
         await context.add_cookies(COOKIES)
         page = await context.new_page()
-        await page.goto(API_URL, wait_until="networkidle")
-        
-        try:
-            data_json = await page.evaluate("() => JSON.parse(document.body.innerText)")
-            print("Jumlah channel:", len(data_json))
-            
-            with open("tipikroya.m3u", "w", encoding="utf-8") as f:
-                f.write("#EXTM3U\n")
-                for ch in data_json:
-                    f.write(f"#EXTINF:-1,{ch['name']}\n{ch['url']}\n")
-            print("File tipikroya.m3u berhasil dibuat.")
-        except Exception as e:
-            print("Gagal decode JSON:", e)
+
+        # buka playlist URL
+        resp = await page.goto(PLAYLIST_URL)
+        text = await resp.text()
 
         await browser.close()
+        return text
 
-asyncio.run(fetch_channels())
+async def main():
+    try:
+        playlist = await fetch_playlist()
+        if not playlist.strip():
+            print("Playlist kosong!")
+            return
+
+        # simpan ke file .m3u
+        with open("tipikroya.m3u", "w", encoding="utf-8") as f:
+            f.write(playlist)
+        print("✅ Playlist berhasil diambil dan disimpan ke tipikroya.m3u")
+    except Exception as e:
+        print("❌ Gagal:", e)
+
+if __name__ == "__main__":
+    asyncio.run(main())
