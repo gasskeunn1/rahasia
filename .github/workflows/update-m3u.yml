@@ -1,33 +1,33 @@
-name: Auto Update tipikroya.m3u
+name: Update M3U
 
 on:
   schedule:
-    - cron: "0 */2 * * *"  # setiap 2 jam
+    - cron: "0 * * * *"  # contoh tiap 1 jam sekali
   workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install requests
-        run: pip install requests
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
       - name: Run update.py
-        env:
-          HYPERA_COOKIES: ${{ secrets.HYPERA_COOKIES }}
         run: python update.py
 
-      - name: Commit & push if changed
-        uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Upload debug files
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          file_pattern: tipikroya.m3u
-          commit_message: "Auto update tipikroya.m3u"
-          branch: main
+          name: debug-files
+          path: |
+            last_response.html
+            errors.log
+            tipikroya.m3u
